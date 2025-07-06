@@ -1,14 +1,11 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from models.schemas import TextRequest,ApiResponse  
-from services.text_generation import generate_text_response
+from services.text_g import create_message, load_markdown_files
 from services.face_r import detect_faces
 from utils.helpers import create_response, audio_to_base64
-from services.voice_elevenlabs import generate_speech
 from services.greetings import generate_greeting
 from services.tts_edge import run_edge_tts
-from services.tts_google import gtts_text_to_speech
-from services.tts_balena import balena_text_to_speech
 import re
 import os
 import time
@@ -26,6 +23,10 @@ app.add_middleware(
 )
 
 
+@app.post("/load-markdown", response_model=dict)
+async def load_markdown_files_endpoint():
+    return await load_markdown_files()
+
 @app.post("/generate",response_model=ApiResponse)
 async def generate_text(request: TextRequest):
     input_text = request.text
@@ -42,7 +43,9 @@ async def generate_text(request: TextRequest):
         )
 
     try:
-        response_text, link = generate_text_response(input_text)
+        response = await create_message(input_text)
+        response_text = response.get("response", "")
+        link = response.get("link", None)
         # clean_text = re.sub(r'[^\w\s]', '', response_text)
         clean_text = re.sub(r'\n', '', response_text)
         # audio = generate_speech(clean_text)
@@ -130,24 +133,24 @@ async def detect_face(file: UploadFile = File(...)):
         result = await detect_faces(file)
         detect_faces_duration = time.monotonic() - start_detect_faces
         
-        if result:
-            # Mulai pengukuran waktu untuk `generate_greeting`
-            start_generate_greeting = time.monotonic()
-            greeting = generate_greeting(result)
-            generate_greeting_duration = time.monotonic() - start_generate_greeting
+        # if result:
+        #     # Mulai pengukuran waktu untuk `generate_greeting`
+        #     start_generate_greeting = time.monotonic()
+        #     greeting = generate_greeting(result)
+        #     generate_greeting_duration = time.monotonic() - start_generate_greeting
             
-            # Mulai pengukuran waktu untuk `run_edge_tts`
-            start_run_edge_tts = time.monotonic()
-            audio = await run_edge_tts(greeting, "detect")
-            run_edge_tts_duration = time.monotonic() - start_run_edge_tts
+        #     # Mulai pengukuran waktu untuk `run_edge_tts`
+        #     start_run_edge_tts = time.monotonic()
+        #     audio = await run_edge_tts(greeting, "detect")
+        #     run_edge_tts_duration = time.monotonic() - start_run_edge_tts
             
-            audio_base64 = audio_to_base64(audio)
-            os.remove(audio)
+        #     audio_base64 = audio_to_base64(audio)
+            # os.remove(audio)
 
         # Logging durasi waktu masing-masing fungsi
         logging.info(f"detect_faces duration: {detect_faces_duration:.2f} seconds")
-        logging.info(f"generate_greeting duration: {generate_greeting_duration:.2f} seconds")
-        logging.info(f"run_edge_tts duration: {run_edge_tts_duration:.2f} seconds")
+        # logging.info(f"generate_greeting duration: {generate_greeting_duration:.2f} seconds")
+        # logging.info(f"run_edge_tts duration: {run_edge_tts_duration:.2f} seconds")
 
         return create_response(
             status="success",
@@ -155,7 +158,7 @@ async def detect_face(file: UploadFile = File(...)):
             message="Face detection successful",
             data={
                 "results": result, 
-                "response": greeting,
+                # "response": greeting,
             }
         )
     except ValueError as ve:
