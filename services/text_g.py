@@ -68,6 +68,7 @@ async def create_message(text_input):
         {context}
 
         Jawablah pertanyaan mahasiswa berikut secara padat, jelas, dan ramah.
+        Jangan menjawab dengan emoji.
         Jika tidak ada informasi relevan, jawab dengan informasi umum dari internet.
         """
 

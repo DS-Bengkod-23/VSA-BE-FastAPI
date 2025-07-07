@@ -133,24 +133,24 @@ async def detect_face(file: UploadFile = File(...)):
         result = await detect_faces(file)
         detect_faces_duration = time.monotonic() - start_detect_faces
         
-        # if result:
-        #     # Mulai pengukuran waktu untuk `generate_greeting`
-        #     start_generate_greeting = time.monotonic()
-        #     greeting = generate_greeting(result)
-        #     generate_greeting_duration = time.monotonic() - start_generate_greeting
+        if result:
+            # Mulai pengukuran waktu untuk `generate_greeting`
+            start_generate_greeting = time.monotonic()
+            greeting = generate_greeting(result)
+            generate_greeting_duration = time.monotonic() - start_generate_greeting
             
-        #     # Mulai pengukuran waktu untuk `run_edge_tts`
-        #     start_run_edge_tts = time.monotonic()
-        #     audio = await run_edge_tts(greeting, "detect")
-        #     run_edge_tts_duration = time.monotonic() - start_run_edge_tts
+            # Mulai pengukuran waktu untuk `run_edge_tts`
+            start_run_edge_tts = time.monotonic()
+            audio = await run_edge_tts(greeting, "detect")
+            run_edge_tts_duration = time.monotonic() - start_run_edge_tts
             
-        #     audio_base64 = audio_to_base64(audio)
-            # os.remove(audio)
+            audio_base64 = audio_to_base64(audio)
+            os.remove(audio)
 
         # Logging durasi waktu masing-masing fungsi
         logging.info(f"detect_faces duration: {detect_faces_duration:.2f} seconds")
-        # logging.info(f"generate_greeting duration: {generate_greeting_duration:.2f} seconds")
-        # logging.info(f"run_edge_tts duration: {run_edge_tts_duration:.2f} seconds")
+        logging.info(f"generate_greeting duration: {generate_greeting_duration:.2f} seconds")
+        logging.info(f"run_edge_tts duration: {run_edge_tts_duration:.2f} seconds")
 
         return create_response(
             status="success",
@@ -158,7 +158,8 @@ async def detect_face(file: UploadFile = File(...)):
             message="Face detection successful",
             data={
                 "results": result, 
-                # "response": greeting,
+                "response": greeting,
+                "audio": audio_base64
             }
         )
     except ValueError as ve:
