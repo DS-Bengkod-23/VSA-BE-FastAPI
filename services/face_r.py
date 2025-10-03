@@ -24,7 +24,7 @@ yunet = YuNet(modelPath=YUNET_MODEL, inputSize=[320, 320],
               backendId=BACKEND_ID, targetId=TARGET_ID)
 
 
-async def detect_faces1(file: UploadFile) -> list:
+async def detect_faces(file: UploadFile) -> list:
     try:
         contents = await file.read()
         image = np.frombuffer(contents, np.uint8)

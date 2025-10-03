@@ -13,3 +13,11 @@ python-multipart
 edge_tts
 gTTS
 requests
+pydantic
+requests
+urllib3
+langchain
+langchain-community
+langchain-google-genai
+langchain-text-splitters
+chromadb
