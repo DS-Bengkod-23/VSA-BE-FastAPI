@@ -3,28 +3,29 @@ def generate_greeting(results):
 
     # Looping setiap hasil deteksi wajah
     for result in results:
-        name = result.get("name").split(" - ")[0]  
+        name = result.get("name").split(" - ")[0]
         first_name = name.split(" ")[0]
 
         emotion = result.get("emotion")
 
         # Menentukan sapaan berdasarkan emosi
         if emotion == "happy":
-            greeting = f"halo {first_name}, sepertinya hari ini cerah sekali ya, semoga harimu menyenangkan"
+            greeting = f"halo Dinusian, sepertinya hari ini sedang bahagia ya, apakah ada yang bisa saya bantu?"
         elif emotion == "sad":
-            greeting = f"halo {first_name}, mengapa wajahmu terlihat sedih, senyum dong"
+            greeting = f"halo Dinusian, mengapa wajahmu terlihat sedih, coba sini ceritakan padaku"
         elif emotion == "angry":
-            greeting = f"halo {first_name}, mengapa wajahmu terlihat murung, senyum dong"
+            greeting = f"halo Dinusian, mengapa wajahmu terlihat marah, tenang dulu ya"
         elif emotion == "surprise":
-            greeting = f"halo {first_name}, ada kabar apa hari ini"
+            greeting = f"halo Dinusian, wah ada suprise apa hari ini? ada yang bisa saya bantu?"
         else:
-            greeting = f"halo {first_name}, saya bengbot, asisten pribadi anda. Ada yang bisa saya bantu?"
+            greeting = f"halo Dinusian, saya bengbot, asisten pribadi anda. Ada yang bisa saya bantu?"
 
         # Menambahkan sapaan ke daftar
         greetings.append(greeting)
 
     # Menggabungkan semua sapaan menjadi satu teks
     return ", ".join(greetings)
+
 
 # def generate_greeting(results):
 #     greetings = []

@@ -1,5 +1,10 @@
 /env
 .env
+/venv
+.venv
+data/
+data/*
+/data/
 /__pycache__/
 __pycache__
 # semua folder pycache

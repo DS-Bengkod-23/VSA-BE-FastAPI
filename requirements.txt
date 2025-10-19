@@ -1,4 +1,4 @@
-fastapi[standart]
+fastapi[standard]
 uvicorn
 python-dotenv
 google-generativeai
@@ -14,7 +14,6 @@ edge_tts
 gTTS
 requests
 pydantic
-requests
 urllib3
 langchain
 langchain-community

@@ -6,11 +6,22 @@ from services.face_r import detect_faces
 from utils.helpers import create_response, audio_to_base64
 from services.greetings import generate_greeting
 from services.tts_edge import run_edge_tts
+from services.tts_google import gtts_text_to_speech
+# You can also import balena if needed
+# from services.tts_balena import balena_text_to_speech
 import re
 import os
 import time
 import logging
+import ssl
+import certifi
 
+# Configure SSL for the application
+ssl_context = ssl.create_default_context(cafile=certifi.where())
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -46,24 +57,21 @@ async def generate_text(request: TextRequest):
         response = await create_message(input_text)
         response_text = response.get("response", "")
         link = response.get("link", None)
-        # clean_text = re.sub(r'[^\w\s]', '', response_text)
         clean_text = re.sub(r'\n', '', response_text)
-        # audio = generate_speech(clean_text)
-        # audio = await run_edge_tts(clean_text)     
+        
+        try:
+            # Try Edge TTS first (with our improved error handling)
+            logger.info("Attempting to generate audio with Edge TTS")
+            audio = await run_edge_tts(clean_text, "audio")
+        except Exception as tts_error:
+            # If Edge TTS fails, fall back to Google TTS
+            logger.warning(f"Edge TTS failed: {str(tts_error)}")
+            logger.info("Falling back to Google TTS")
+            audio = gtts_text_to_speech(clean_text, "audio")
 
-        # pakai edge tts
-        audio = await run_edge_tts(clean_text, "audio")     
-        # audio = generate_speech(clean_text)
-
-        # pakai google tts
-        # audio = gtts_text_to_speech(clean_text)
-
-        # pakai balena tts
-        # audio = balena_text_to_speech(clean_text)
-
-        # audio_base64 = audio_to_base64(audio)
         audio_base64 = audio_to_base64(audio)
         os.remove(audio)
+        
         if link:
             return create_response(
                 status="success",
@@ -79,13 +87,13 @@ async def generate_text(request: TextRequest):
                 data={"response" : clean_text, "audio" : audio_base64}
             )   
     except Exception as e:
+        logger.error(f"Error generating response: {str(e)}", exc_info=True)
         return create_response(
             status="error",
             code=500,
             message=str(e),
             data={}
         )
-
 
 @app.post("/generate_audio",response_model=ApiResponse)
 async def generate_audio(request: TextRequest):
@@ -99,11 +107,14 @@ async def generate_audio(request: TextRequest):
         )
 
     try:
-        # response_text, link = generate_text_response(input_text)
-        # clean_text = re.sub(r'\n', '', response_text)
-        audio = await run_edge_tts(input_text, "generate_audio")
-        # audio = gtts_text_to_speech(input_text)
-        # audio =  generate_speech(input_text)
+        try:
+            # Try Edge TTS first
+            audio = await run_edge_tts(input_text, "generate_audio")
+        except Exception as tts_error:
+            # If Edge TTS fails, fall back to Google TTS
+            logger.warning(f"Edge TTS failed: {str(tts_error)}")
+            audio = gtts_text_to_speech(input_text, "generate_audio")
+            
         audio_base64 = audio_to_base64(audio)
         os.remove(audio)
 
@@ -115,6 +126,7 @@ async def generate_audio(request: TextRequest):
         )
       
     except Exception as e:
+        logger.error(f"Error generating audio: {str(e)}", exc_info=True)
         return create_response(
             status="error",
             code=500,
@@ -139,10 +151,15 @@ async def detect_face(file: UploadFile = File(...)):
             greeting = generate_greeting(result)
             generate_greeting_duration = time.monotonic() - start_generate_greeting
             
-            # Mulai pengukuran waktu untuk `run_edge_tts`
-            start_run_edge_tts = time.monotonic()
-            audio = await run_edge_tts(greeting, "detect")
-            run_edge_tts_duration = time.monotonic() - start_run_edge_tts
+            try:
+                # Try Edge TTS first
+                audio = await run_edge_tts(greeting, "detect")
+            except Exception as tts_error:
+                # If Edge TTS fails, fall back to Google TTS
+                logger.warning(f"Edge TTS failed: {str(tts_error)}")
+                audio = gtts_text_to_speech(greeting, "detect")
+                
+            run_edge_tts_duration = time.monotonic() - start_generate_greeting
             
             audio_base64 = audio_to_base64(audio)
             os.remove(audio)
@@ -150,7 +167,7 @@ async def detect_face(file: UploadFile = File(...)):
         # Logging durasi waktu masing-masing fungsi
         logging.info(f"detect_faces duration: {detect_faces_duration:.2f} seconds")
         logging.info(f"generate_greeting duration: {generate_greeting_duration:.2f} seconds")
-        logging.info(f"run_edge_tts duration: {run_edge_tts_duration:.2f} seconds")
+        logging.info(f"audio generation duration: {run_edge_tts_duration:.2f} seconds")
 
         return create_response(
             status="success",

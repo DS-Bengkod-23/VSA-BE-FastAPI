@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -7,11 +8,7 @@ API_KEY = os.getenv("API_KEY")
 if not API_KEY:
     raise Exception("API Key tidak ditemukan. Pastikan API Key sudah ada di .env")
 
-GENERATION_CONFIG = {
-    "candidate_count": 1,
-    "max_output_tokens": 100,
-    "temperature": 1.0
-}
+GENERATION_CONFIG = {"candidate_count": 1, "max_output_tokens": 100, "temperature": 1.0}
 
 DEFAULT_TEXT = """
     Halo, disini aku akan memberikan mu sebuah identitas untuk deployment mu.
